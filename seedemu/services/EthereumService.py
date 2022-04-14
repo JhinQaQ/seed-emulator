@@ -11,6 +11,7 @@ from typing import Dict, List
 
 import json
 from datetime import datetime, timezone
+import re
 
 ETHServerFileTemplates: Dict[str, str] = {}
 
@@ -178,13 +179,25 @@ class EthAccount():
         self.lib_eth_account = Account
         self.account = self.__importAccout(keyfile=keyfile, password=password) if keyfile else self.__createAccount()
         self.address = self.account.address
+        self.__validate_balance(alloc_balance=alloc_balance)
         self.alloc_balance = alloc_balance
         # encrypt private for Ethereum Client, like geth and generate the content of keystore file
         encrypted = self.lib_eth_account.encrypt(self.account.key, password=password)
         self.keystore_content = json.dumps(encrypted)
         # generate the name of the keyfile
         datastr = datetime.now(timezone.utc).isoformat().replace("+00:00", "000Z").replace(":","-")
-        self.keystore_filename = "UTC--"+datastr+"--"+encrypted["address"] 
+        self.keystore_filename = "UTC--"+datastr+"--"+encrypted["address"]
+
+    def __validate_balance(self, alloc_balance: str):
+        """
+        validate balance
+        It only allow positive decimal or positive hexadecimal
+        """
+        prog_dec = re.compile('^[1-9]\d*|0$')
+        result_dec = prog_dec.match(alloc_balance)
+        prog_hex = re.compile('^0[xX][0-9a-fA-F]+|[0-9a-fA-F]+$')
+        result_hex = prog_hex.match(alloc_balance)
+        assert bool(result_dec) or bool(result_hex) , "Invalid Balance: {}".format(alloc_balance)
     
     def __importAccout(self, keyfile: str, password = "admin"):
         """
@@ -298,7 +311,7 @@ class EthereumServer(Server):
         self.__enable_external_connection = False
         self.__unlockAccounts = False
         self.__geth_mode = None
-        self.__prefunded_accounts = []
+        self.__prefunded_accounts = [EthAccount(alloc_balance=str(32 * pow(10, 18)), password="admin")] #create a prefunded account by default. It ensure POA network works when create/import prefunded account is not called.
         self.__consensus_mechanism = None # keep as empty to make sure the OR statement works in the install function
 
     def __createNewAccountCommand(self, node: Node):
@@ -340,7 +353,7 @@ class EthereumServer(Server):
             
             @param ethereum node on which we want to deploy the changes.
             
-            """ 
+            """   
             if self.getMode() == "light":
                 command = " sleep 20\n\
                 geth --exec 'eth.defaultAccount = eth.accounts[0]' attach \n\
@@ -547,7 +560,7 @@ class EthereumServer(Server):
         """
 
         return self.__bootnode_http_port
-    
+        
     def setMode(self, mode: str) -> EthereumServer:
         """!
         @brief set the mode of geth.
@@ -781,6 +794,13 @@ class EthereumService(Service):
 
         if self.__save_state:
             node.addSharedFolder('/root/.ethereum', '{}/{}'.format(self.__save_path, server.getId()))
+    
+    def install(self, vnode: str) -> EthereumServer:
+        """!
+        @brief Override function of Sevice.install
+        Here is downcasting the return for IntelliSense :)
+        """
+        return super().install(vnode)
 
     def _doInstall(self, node: Node, server: EthereumServer):
         self._log('installing eth on as{}/{}...'.format(node.getAsn(), node.getName()))
