@@ -419,14 +419,10 @@ class EthereumServer(Server):
         node.appendFile('/tmp/eth-nodes', '\n'.join(eth.getBootNodes()[:]))
         node.appendFile('/tmp/eth-bootstrapper', ETHServerFileTemplates['bootstrapper'])
         node.appendFile('/tmp/eth-password', 'admin') 
-
-        node.addSoftware('software-properties-common')
-
         # tap the eth repo
-        node.addBuildCommand('add-apt-repository ppa:ethereum/ethereum')
-
+        # add software software-properties-common
         # install geth and bootnode
-        node.addBuildCommand('apt-get update && apt-get install --yes geth bootnode')
+        node.addBuildCommand('apt-get update && apt-get install --yes software-properties-common && add-apt-repository ppa:ethereum/ethereum && apt-get update && apt-get install --yes geth bootnode')
 
         # set the data directory
         datadir_option = "--datadir /root/.ethereum"
