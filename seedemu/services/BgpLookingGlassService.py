@@ -5,6 +5,12 @@ from typing import Set, Dict
 
 BIRDCTRL='/run/bird/bird.ctl'
 
+BUILD_COMMANDS = """git clone https://github.com/xddxdd/bird-lg-go /lg \
+    && curl -Lo /bin/go-bindata https://github.com/kevinburke/go-bindata/releases/download/v3.11.0/go-bindata-linux-amd64 \
+    && chmod +x /bin/go-bindata \
+    && make -C /lg
+"""
+
 class BgpLookingGlassServer(Server):
     """!
     @brief the BGP looking glass server. A looking glass server has two parts,
@@ -34,13 +40,14 @@ class BgpLookingGlassServer(Server):
         """
 
         # note: need golang 1.12+; ubuntu defaults to 1.13. need attention if using debain
-        node.addSoftware('golang')
-        node.addSoftware('git')
-        node.addSoftware('make')
+        node.addSoftware('golang git make')
+        node.addBuildCommand(BUILD_COMMANDS)
+        '''
         node.addBuildCommand('git clone https://github.com/xddxdd/bird-lg-go /lg')
         node.addBuildCommand('curl -Lo /bin/go-bindata https://github.com/kevinburke/go-bindata/releases/download/v3.11.0/go-bindata-linux-amd64')
         node.addBuildCommand('chmod +x /bin/go-bindata')
         node.addBuildCommand('make -C /lg')
+        '''
 
     def setFrontendPort(self, port: int) -> BgpLookingGlassServer:
         """!

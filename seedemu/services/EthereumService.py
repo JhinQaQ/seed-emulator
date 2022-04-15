@@ -38,7 +38,11 @@ while read -r node; do {
     }
 }; done < /tmp/eth-nodes
 '''
-
+BUILD_COMMANDS = """apt-get update && apt-get install --yes software-properties-common \
+    && add-apt-repository ppa:ethereum/ethereum \
+    && apt-get update \
+    && apt-get install --yes geth bootnode
+"""
 class ConsensusMechanism(Enum):
     '''
     @brief Consensus Mechanism Enum. POA for Proof of Authority, POW for Proof Of Work
@@ -422,7 +426,7 @@ class EthereumServer(Server):
         # tap the eth repo
         # add software software-properties-common
         # install geth and bootnode
-        node.addBuildCommand('apt-get update && apt-get install --yes software-properties-common && add-apt-repository ppa:ethereum/ethereum && apt-get update && apt-get install --yes geth bootnode')
+        node.addBuildCommand(BUILD_COMMANDS)
 
         # set the data directory
         datadir_option = "--datadir /root/.ethereum"

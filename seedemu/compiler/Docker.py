@@ -864,9 +864,7 @@ class Docker(Compiler):
         dockerfile += self._addFile('/seedemu_sniffer', DockerCompilerFileTemplates['seedemu_sniffer'])
         dockerfile += self._addFile('/seedemu_worker', DockerCompilerFileTemplates['seedemu_worker'])
 
-        dockerfile += 'RUN chmod +x /start.sh\n'
-        dockerfile += 'RUN chmod +x /seedemu_sniffer\n'
-        dockerfile += 'RUN chmod +x /seedemu_worker\n'
+        dockerfile += 'RUN chmod +x /start.sh && chmod +x /seedemu_sniffer && chmod +x /seedemu_worker\n'
 
         for file in node.getFiles():
             (path, content) = file.get()
